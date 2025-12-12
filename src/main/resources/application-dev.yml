@@ -1,0 +1,83 @@
+spring:
+
+  # -------------------------------------------------
+  # SECURITY CONFIG CUSTOM
+  # -------------------------------------------------
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://kk.organization.io/realms/edc
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/edc-db
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    defer-datasource-initialization: true
+
+logging:
+  level:
+    edc: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+
+app:
+  mockCredentials: false
+  security:
+    enabled: true
+    clientId: edc-provisioning-portal-fe
+    custom:
+      roles:
+        admin: EDC_ADMIN
+        user: EDC_USER
+        submit: EDC_SUBMIT
+    cors:
+      exposeHeaders: Access-Control-Allow-Origin,Content-Type,Authorization,Access-Control-Allow-Methods,Access-Control-Allow-Headers,Access-Control-Max-Age,Access-Control-Request-Headers,Access-Control-Request-Method,x-total
+      methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+      origins: http://localhost:4200
+      enableGlobalCors: false
+    keycloak:
+      base-url: https://kk.organization.io
+      custom-attribute-keys:
+        tenant: tenantName
+      admin:
+        username: root
+        password: root
+
+# kk params for client creation in multitentancy
+#      client:
+#        root-url: "https://participantname/dashboard"
+#        redirect-uris:
+#          - "http://localhost:4200/*"
+#          - "http://localhost:4200"
+#        post-logout-redirect-uris:
+#          - "http://localhost:4200/*"
+#          - "http://localhost:4200"
+#        web-origins:
+#          - "*"
+
+#external:
+#  api:
+#    baseUrl: "http://provisioner-service.poc-provisioner.svc.cluster.local:9999"
+#    provisioner:
+#      endpoint: "/api/v1/resources"
+#    credentials:
+#      endpoint: "/api/identity/v1alpha/participants/{base64Did}/credentials/request"
+#    kubeHost: "192.168.1.230"
+#    didTemplate: "did:web:identityhub.{participant}.svc.cluster.local%3A7083:{participant}"
+#    issuerDid: "did:web:dataspace-issuer-service.poc-issuer.svc.cluster.local%3A10016:issuer"
+#    holderPid: "credential-request-1"
+#    apiKey: "c3VwZXItdXNlcg==.c3VwZXItc2VjcmV0LWtleQo="
+

@@ -1,0 +1,724 @@
+openapi: 3.1.0
+info:
+  title: EDC POC Management API
+  version: 0.2.0
+  description: >
+    API for managing tenants and participants in the dataspace.
+
+servers:
+  - url: https://localhost:8082/api/v1
+    description: Production
+  - url: http://localhost:8080/v1
+    description: Development
+
+tags:
+  - name: tenants
+    description: Operations for tenant management
+  - name: participants
+    description: Operations for participant management
+  - name: Tenant Management
+    description: API for tenant creation from signup page
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TenantRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          pattern: "^[a-z0-9-]+$"
+          minLength: 3
+          maxLength: 63
+        description:
+          type: string
+          maxLength: 500
+        metadata:
+          type: object
+          additionalProperties: true
+
+    TenantUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        metadata:
+          type: object
+          additionalProperties: true
+
+    TenantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, DELETED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ParticipantRequest:
+      type: object
+      required: [participant]
+      properties:
+        participant:
+          $ref: '#/components/schemas/ParticipantRequestParticipantDto'
+        user:
+          $ref: '#/components/schemas/ParticipantRequestUserDto'
+        tenantName:
+          type: string
+
+    ParticipantRequestParticipantDto:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 63
+        description:
+          type: string
+          maxLength: 500
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ParticipantRequestUserDto:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ParticipantUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ParticipantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        companyName:
+          type: string
+        did:
+          type: string
+        host:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        currentOperation:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ParticipantMeResponse:
+      type: object
+      properties:
+        participant:
+          $ref: '#/components/schemas/ParticipantMeResponseParticipantDto'
+        user:
+          $ref: '#/components/schemas/ParticipantMeResponseUserDto'
+
+    ParticipantMeResponseParticipantDto:
+      type: object
+      properties:
+        id:
+          type: string
+        participantName:
+          type: string
+        name:
+          type: string
+        did:
+          type: string
+        host:
+          type: string
+        description:
+          type: string
+        currentOperation:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ParticipantMeResponseUserDto:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CredentialRequest:
+      type: object
+      required: [credentials]
+      properties:
+        credentials:
+          type: array
+          items:
+            $ref: '#/components/schemas/CredentialRequestCredentialItem'
+
+    CredentialRequestCredentialItem:
+      type: object
+      required: [format, type, id]
+      properties:
+        format:
+          type: string
+          pattern: "VC1_0_JWT"
+        type:
+          type: string
+          pattern: "^(MembershipCredential|DataProcessorCredential)$"
+        id:
+          type: string
+
+    CredentialResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        requestId:
+          type: string
+        issuerDid:
+          type: string
+        holderPid:
+          type: string
+        credentialType:
+          type: string
+        format:
+          type: string
+        status:
+          type: string
+          enum: [REQUESTED, ISSUED, REVOKED, EXPIRED]
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        credentialHash:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OperationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        eventType:
+          type: string
+        eventPayload:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+
+    ExternalCredentialRequest:
+      type: object
+      properties:
+        issuerDid:
+          type: string
+        holderPid:
+          type: string
+        credentials:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalCredentialRequestCredentialSpec'
+
+    ExternalCredentialRequestCredentialSpec:
+      type: object
+      properties:
+        format:
+          type: string
+          pattern: "VC1_0_JWT"
+        type:
+          type: string
+          pattern: "^(MembershipCredential|DataProcessorCredential)$"
+        id:
+          type: string
+
+    ExternalProvisioningRequest:
+      type: object
+      properties:
+        participantName:
+          type: string
+        did:
+          type: string
+        kubeHost:
+          type: string
+
+security:
+  - BearerAuth: []
+
+paths:
+  /tenants:
+    get:
+      tags: [tenants]
+      summary: List all tenants
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1, minimum: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, minimum: 1, maximum: 20000 }
+        - in: query
+          name: sortBy
+          schema: { type: string, default: name }
+        - in: query
+          name: sortDir
+          schema: { type: string, default: asc }
+        - in: query
+          name: name
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string, enum: [ACTIVE, INACTIVE, DELETED] }
+      responses:
+        "200":
+          description: Tenant list retrieved
+          headers:
+            X-Total: { schema: { type: string } }
+            X-Page: { schema: { type: string } }
+            X-Limit: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantResponse'
+        "401":
+          description: Unauthorized
+    post:
+      tags: [tenants]
+      summary: Create a new tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+      responses:
+        "201":
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        "400": { description: Invalid request }
+        "409": { description: Tenant with this name already exists }
+        "401": { description: Unauthorized }
+
+  /tenants/{tenantId}:
+    get:
+      tags: [tenants]
+      summary: Retrieve a tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Tenant found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        "404": { description: Tenant not found }
+        "401": { description: Unauthorized }
+    put:
+      tags: [tenants]
+      summary: Update a tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateRequest'
+      responses:
+        "200":
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        "404": { description: Tenant not found }
+        "401": { description: Unauthorized }
+    delete:
+      tags: [tenants]
+      summary: Delete a tenant
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Tenant deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        "404": { description: Tenant not found }
+        "401": { description: Unauthorized }
+
+  /tenants/me:
+    get:
+      tags: [tenants]
+      summary: Retrieve the current tenant
+      responses:
+        "200":
+          description: Tenant information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        "404": { description: Tenant not found }
+        "401": { description: Unauthorized }
+        "400": { description: Invalid token or missing tenantName }
+
+  /signup:
+    post:
+      tags: [Tenant Management]
+      summary: Signup a new tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRequest'
+      responses:
+        "201":
+          description: Signup completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        "400": { description: Invalid request }
+        "409": { description: Name already exists }
+        "401": { description: Unauthorized }
+
+  /participants:
+    get:
+      tags: [participants]
+      summary: List all participants
+      parameters:
+        - in: query
+          name: currentOperation
+          schema: { type: string }
+        - in: query
+          name: participantName
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+      responses:
+        "200":
+          description: List of participants
+          headers:
+            X-Total: { schema: { type: string } }
+            X-Page: { schema: { type: string } }
+            X-Limit: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParticipantResponse'
+        "401": { description: Unauthorized }
+    post:
+      tags: [participants]
+      summary: Create a new participant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipantRequest'
+      responses:
+        "202":
+          description: Provisioning started (asynchronous operation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        "400": { description: Invalid request }
+        "401": { description: Unauthorized }
+        "409": { description: Participant already exists }
+
+  /participants/{participantId}:
+    get:
+      tags: [participants]
+      summary: Retrieve a specific participant
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Participant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        "404": { description: Resource not found }
+        "401": { description: Unauthorized }
+    delete:
+      tags: [participants]
+      summary: Delete a participant
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+      responses:
+        "202":
+          description: Deprovisioning started (asynchronous operation)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        "404": { description: Resource not found }
+        "401": { description: Unauthorized }
+    patch:
+      tags: [participants]
+      summary: Update a participant
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipantUpdateRequest'
+      responses:
+        "200":
+          description: Participant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantResponse'
+        "404": { description: Participant not found or not modifiable }
+        "401": { description: Unauthorized }
+
+  /participants/me:
+    get:
+      tags: [participants]
+      summary: Retrieve the participant using parameters from the JWT
+      responses:
+        "200":
+          description: Participant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantMeResponse'
+        "404": { description: Resource not found }
+        "401": { description: Unauthorized }
+
+  /participants/{participantId}/credentials:
+    get:
+      tags: [participants]
+      summary: List participant credentials
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string, enum: [REQUESTED, ISSUED, REVOKED, EXPIRED] }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+      responses:
+        "200":
+          description: List of credentials
+          headers:
+            X-Total: { schema: { type: string } }
+            X-Page: { schema: { type: string } }
+            X-Limit: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CredentialResponse'
+        "404": { description: Resource not found }
+        "401": { description: Unauthorized }
+    post:
+      tags: [participants]
+      summary: Request credentials from the participant
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialRequest'
+      responses:
+        "201":
+          description: Credential request started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId: { type: string }
+                  participantId: { type: string }
+                  status: { type: string }
+                  credentials:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        format: { type: string }
+                        type: { type: string }
+                        id: { type: string }
+                        status: { type: string }
+        "400": { description: Invalid request }
+        "404": { description: Participant not found }
+        "401": { description: Unauthorized }
+        "502": { description: External API call error }
+
+  /participants/{participantId}/credentials/{credentialId}:
+    get:
+      tags: [participants]
+      summary: Retrieve a specific credential
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: credentialId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Credential details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialResponse'
+        "404": { description: Resource not found }
+        "401": { description: Unauthorized }
+
+  /participants/{participantId}/operations:
+    get:
+      tags: [participants]
+      summary: Participant operation history
+      parameters:
+        - in: path
+          name: participantId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: eventType
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+      responses:
+        "200":
+          description: Operation history
+          headers:
+            X-Total: { schema: { type: string } }
+            X-Page: { schema: { type: string } }
+            X-Limit: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperationResponse'
+        "404": { description: Resource not found }
+        "401": { description: Unauthorized }
